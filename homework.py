@@ -29,7 +29,8 @@ HOMEWORK_VERDICTS = {
 
 
 def check_tokens():
-    ...
+    """Проверка доступности переменных окружения."""
+    return all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID])
 
 
 def send_message(bot, message):
@@ -42,11 +43,35 @@ def send_message(bot, message):
 
 
 def get_api_answer(timestamp):
-    ...
+    """Запрос к эндпоинту API-сервиса."""
+    timestamp = int(time.time())
+    params = {'from_date': timestamp}
+    try:
+        response = requests.get(ENDPOINT, headers=HEADERS, params=params)
+    except requests.ConnectionError:
+        logging.error('Подключение к Интернету отсутствует')
+        raise ConnectionError('Подключение к Интернету отсутствует')
+    except Exception as error:
+        logging.error(f'Ошибка от сервера: {error}')
+        send_message(f'Ошибка от сервера: {error}')
+    if response.status_code != HTTPStatus.OK:
+        logging.error(f'Код ответа не 200: {response.status_code}')
+        raise requests.exceptions.RequestException(
+            f'Код ответа не 200: {response.status_cod}')
+    try:
+        return response.json()
+    except json.JSONDecodeError:
+        logging.error('Что-то не так в json')
+        send_message('Что-то не так в json')
 
 
 def check_response(response):
-    ...
+    """Проверка ответа API на корректность."""
+    try:
+        homework = response['homeworks']
+    except KeyError as error:
+        logging.error(f'Ошибка доступа по ключу homeworks: {error}')
+    return homework
 
 
 def parse_status(homework):
