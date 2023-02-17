@@ -78,6 +78,7 @@ def check_response(response):
         send_message(f'Ошибка доступа по ключу homeworks: {error}')
     if not isinstance(homework, list):
         logging.error('homeworks не в виде списка')
+        send_message('homeworks не в виде списка')
         raise TypeError('homeworks не в виде списка')
     return homework
 
@@ -113,7 +114,7 @@ def main():
             if homework:
                 send_message(bot, parse_status(homework[0]))
             else:
-                logging.debug('Нет новых статусов')
+                logging.info('Нет новых статусов')
         except Exception as error:
             logging.error(f'Сбой в работе программы: {error}')
             message = f'Сбой в работе программы: {error}'
