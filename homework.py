@@ -16,7 +16,7 @@ PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
-RETRY_PERIOD = 600
+RETRY_PERIOD = 30
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
@@ -61,13 +61,12 @@ def get_api_answer(timestamp):
     if response.status_code != HTTPStatus.OK:
         logging.error(f'Код ответа не 200: {response.status_code}')
         raise requests.exceptions.RequestException(
-            f'Код ответа не 200: {response.status_cod}'
-        )
+            f'Код ответа не 200: {response.status_cod}')
     try:
         return response.json()
     except json.JSONDecodeError:
-        logging.error('Сервер вернул невалидный ответ')
-        send_message('Сервер вернул невалидный ответ')
+        logging.error('Что-то не так с Json')
+        send_message('Что-то не так с Json')
 
 
 def check_response(response):
@@ -76,6 +75,7 @@ def check_response(response):
         homework = response['homeworks']
     except KeyError as error:
         logging.error(f'Ошибка доступа по ключу homeworks: {error}')
+        send_message(f'Ошибка доступа по ключу homeworks: {error}')
     if not isinstance(homework, list):
         logging.error('homeworks не в виде списка')
         raise TypeError('homeworks не в виде списка')
@@ -91,6 +91,7 @@ def parse_status(homework):
     homework_name = homework['homework_name']
     homework_status = homework['status']
     if homework_status not in HOMEWORK_VERDICTS:
+        logging.error(f'Неизвестный статус работы: {homework_status}')
         raise Exception(f'Неизвестный статус работы: {homework_status}')
     verdict = HOMEWORK_VERDICTS[homework_status]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
@@ -101,7 +102,7 @@ def main():
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
     logging.info('Запущен бот по проверке задания')
-    bot.send_message(TELEGRAM_CHAT_ID, 'Запущен бот по проверке задания')
+    send_message(bot, 'Запущен бот по проверке задания')
     if not check_tokens():
         logging.critical('Не все переменные окружения на месте')
         sys.exit('Не все переменные окружения на месте')
@@ -113,7 +114,6 @@ def main():
                 send_message(bot, parse_status(homework[0]))
             else:
                 logging.debug('Нет новых статусов')
-                bot.send_message(TELEGRAM_CHAT_ID, 'Нет новых статусов')
         except Exception as error:
             logging.error(f'Сбой в работе программы: {error}')
             message = f'Сбой в работе программы: {error}'
