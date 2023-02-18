@@ -93,6 +93,7 @@ def parse_status(homework):
     homework_status = homework['status']
     if homework_status not in HOMEWORK_VERDICTS:
         logging.error(f'Неизвестный статус работы: {homework_status}')
+        send_message(f'Неизвестный статус работы: {homework_status}')
         raise Exception(f'Неизвестный статус работы: {homework_status}')
     verdict = HOMEWORK_VERDICTS[homework_status]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
@@ -118,7 +119,7 @@ def main():
         except Exception as error:
             logging.error(f'Сбой в работе программы: {error}')
             message = f'Сбой в работе программы: {error}'
-            bot.send_message(bot, message)
+            send_message(bot, message)
         finally:
             current_timestamp = all_homework.get('current_date')
             time.sleep(RETRY_PERIOD)
