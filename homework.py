@@ -56,12 +56,12 @@ def get_api_answer(timestamp):
         logging.error('Подключение к Интернету отсутствует')
         raise ConnectionError('Подключение к Интернету отсутствует')
     except Exception as error:
-        logging.error(f'Эндпоинт недоступен.Ошибка от сервера: {error}')
+        logging.error(f'Эндпоинт недоступен. Ошибка от сервера: {error}')
         send_message(f'Эндпоинт недоступен. Ошибка от сервера: {error}')
     if response.status_code != HTTPStatus.OK:
         logging.error(f'Код ответа не 200: {response.status_code}')
         raise requests.exceptions.RequestException(
-            f'Код ответа не 200: {response.status_cod}')
+            f'Код ответа не 200: {response.status_code}')
     try:
         return response.json()
     except json.JSONDecodeError:
