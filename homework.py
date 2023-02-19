@@ -71,16 +71,15 @@ def get_api_answer(timestamp):
 
 def check_response(response):
     """Проверка ответа API на корректность."""
-    try:
-        homework = response['homeworks']
-    except KeyError as error:
-        logging.error(f'Ошибка доступа по ключу homeworks: {error}')
-        send_message(f'Ошибка доступа по ключу homeworks: {error}')
-    if not isinstance(homework, list):
-        logging.error('homeworks не в виде списка')
-        send_message('homeworks не в виде списка')
-        raise TypeError('homeworks не в виде списка')
-    return homework
+    logging.info('Проверка ответа от API')
+    if not isinstance(response, dict):
+        raise TypeError('Ответ API не является словарем')
+    if 'homeworks' not in response or 'current_date' not in response:
+        raise KeyError('Отсутствует ключ')
+    homeworks = response['homeworks']
+    if not isinstance(homeworks, list):
+        raise TypeError('Ответ API не является листом')
+    return homeworks
 
 
 def parse_status(homework):
