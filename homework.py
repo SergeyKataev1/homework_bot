@@ -9,19 +9,9 @@ import requests
 import telegram
 from dotenv import load_dotenv
 
+from exeptions import ParsStatusError, TelegramError
+
 load_dotenv()
-
-
-class TelegramError(Exception):
-    """Ошибка отправки сообщения в telegram."""
-
-    pass
-
-
-class ParsStatusError(Exception):
-    """Ошибка статуса в парсинге."""
-
-    pass
 
 
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
@@ -66,21 +56,23 @@ def get_api_answer(current_timestamp):
         response = requests.get(ENDPOINT, headers=HEADERS, params=params)
         logging.debug('Отправлен запрос к эндпоинту API-сервиса')
     except requests.ConnectionError:
-        logging.error('Подключение к Интернету отсутствует')
-        raise ConnectionError('Подключение к Интернету отсутствует')
+        message = 'Подключение к Интернету отсутствует'
+        logging.error(message)
+        raise ConnectionError(message)
     except Exception as error:
         message = f'Эндпоинт недоступен. Ошибка от сервера: {error}'
         logging.error(message)
         send_message(message)
     if response.status_code != HTTPStatus.OK:
-        logging.error(f'Код ответа не 200: {response.status_code}')
-        raise requests.exceptions.RequestException(
-            f'Код ответа не 200: {response.status_code}')
+        message = f'Код ответа не 200: {response.status_code}'
+        logging.error(message)
+        raise requests.exceptions.RequestException(message)
     try:
         return response.json()
     except json.JSONDecodeError:
-        logging.error('Что-то не так с Json')
-        send_message('Что-то не так с Json')
+        message = 'Что-то не так с Json'
+        logging.error(message)
+        send_message(message)
 
 
 def check_response(response):
@@ -88,8 +80,10 @@ def check_response(response):
     logging.info('Проверка ответа от API')
     if not isinstance(response, dict):
         raise TypeError('Ответ API не является словарем')
-    if 'homeworks' not in response or 'current_date' not in response:
-        raise KeyError('Отсутствует ключ')
+    if 'homeworks' not in response:
+        raise KeyError('Отсутсвует ключ homeworks')
+    if 'current_date' not in response:
+        raise KeyError('Отсутствует ключ current_date')
     homeworks = response['homeworks']
     if not isinstance(homeworks, list):
         raise TypeError('Ответ API не является листом')
@@ -118,11 +112,13 @@ def main():
     """Основная логика работы бота."""
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
-    logging.info('Запущен бот по проверке задания')
-    send_message(bot, 'Запущен бот по проверке задания')
+    message = 'Запущен бот по проверке задания'
+    logging.info(message)
+    send_message(bot, message)
     if not check_tokens():
-        logging.critical('Не все переменные окружения на месте')
-        sys.exit('Не все переменные окружения на месте')
+        message = 'Не все переменные окружения на месте'
+        logging.critical(message)
+        sys.exit(message)
     current_timestamp = 1656633600
     old_homework_status = ''
     while True:
@@ -137,8 +133,8 @@ def main():
             else:
                 logging.info('Нет новых статусов')
         except Exception as error:
-            logging.error(f'Сбой в работе программы: {error}')
             message = f'Сбой в работе программы: {error}'
+            logging.error(message)
             send_message(bot, message)
         finally:
             time.sleep(RETRY_PERIOD)
